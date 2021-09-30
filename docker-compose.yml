@@ -1,0 +1,31 @@
+version: '3.3'
+
+services:
+  database:
+    image: postgres:13-alpine
+    expose:
+      - 5432
+    #ports:
+    #  - "5432:5432"
+    environment:
+      - POSTGRES_USER=Qwerty
+      - POSTGRES_PASSWORD=Qwerty5432
+      - POSTGRES_DB=simple
+
+  filling_script:
+    build: ./fill_script
+    volumes:
+      - ./csv_data:/csv_data
+    command: sh -c "wait-for-it database:5432 --timeout=30 --strict -- python3 /fill_script/main.py"
+    depends_on:
+      - database
+
+  server:
+    build: ./server
+    command: sh -c "wait-for-it database:5432 --timeout=30 --strict -- python3 /server/main.py"
+    expose:
+      - 5001
+    ports:
+      - "5001:5001"
+    depends_on:
+      - database
